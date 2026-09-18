@@ -7,7 +7,7 @@
 - **Next.js 14** (Pages Router) - обычный `.js`/`.jsx`
 - **React Context + localStorage** - состояние корзины сохраняется между визитами
 - **CSS Modules** - тёмно-синяя/чёрная/белая палитра
-- **FakeStore API** — `https://fakestoreapi.com`
+- **FakeStore API** - `https://fakestoreapi.com`
 
 ## Как запустить
 
