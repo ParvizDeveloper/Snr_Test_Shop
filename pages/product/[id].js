@@ -1,17 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCart } from "@/context/CartContext";
 import styles from "@/styles/Product.module.css";
 
-export default function ProductPage({ product, error }) {
+export default function ProductPage() {
   const router = useRouter();
+  const { id } = router.query;
+
   const { addItem } = useCart();
+  const [product, setProduct] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
-  if (router.isFallback) {
+  useEffect(() => {
+    if (!id) return;
+
+    setLoading(true);
+    setError(null);
+
+    fetch(`https://fakestoreapi.com/products/${id}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Товар не найден");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data || !data.id) {
+          throw new Error("Товар не найден");
+        }
+        setProduct(data);
+      })
+      .catch((err) => setError(err.message || "Не удалось загрузить товар."))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
     return <div className="spinner" />;
   }
 
@@ -47,7 +75,7 @@ export default function ProductPage({ product, error }) {
 
         <div className={styles.layout}>
           <div className={styles.imageWrap}>
-            {}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={product.image} alt={product.title} />
           </div>
 
@@ -97,40 +125,4 @@ export default function ProductPage({ product, error }) {
       </div>
     </div>
   );
-}
-
-export async function getStaticPaths() {
-  try {
-    const res = await fetch("https://fakestoreapi.com/products");
-    const products = await res.json();
-    const paths = products.map((p) => ({ params: { id: String(p.id) } }));
-
-    return { paths, fallback: "blocking" };
-  } catch (err) {
-    return { paths: [], fallback: "blocking" };
-  }
-}
-
-export async function getStaticProps({ params }) {
-  try {
-    const res = await fetch(`https://fakestoreapi.com/products/${params.id}`);
-    if (!res.ok) {
-      throw new Error("Товар не найден");
-    }
-    const product = await res.json();
-
-    if (!product || !product.id) {
-      return { notFound: true };
-    }
-
-    return {
-      props: { product },
-      revalidate: 3600,
-    };
-  } catch (err) {
-    return {
-      props: { product: null, error: "Не удалось загрузить товар." },
-      revalidate: 60,
-    };
-  }
 }
