@@ -1,11 +1,28 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import ProductCard from "@/components/ProductCard";
 import styles from "@/styles/Home.module.css";
 
-export default function Home({ products, error }) {
+export default function Home() {
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const [activeCategory, setActiveCategory] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetch("https://fakestoreapi.com/products")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Ошибка API: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => setProducts(data))
+      .catch((err) => setError(err.message || "Не удалось загрузить товары"))
+      .finally(() => setLoading(false));
+  }, []);
 
   const categories = useMemo(() => {
     if (!products) return [];
@@ -20,8 +37,7 @@ export default function Home({ products, error }) {
       )
       .filter((p) =>
         p.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
-      )
-
+      );
   }, [products, activeCategory, searchTerm]);
 
   return (
@@ -41,14 +57,16 @@ export default function Home({ products, error }) {
           </h1>
         </div>
 
-        {error && (
+        {loading && <p className={styles.noResults}>Загрузка товаров...</p>}
+
+        {error && !loading && (
           <div className="error-box">
             <h2>Не удалось загрузить товары</h2>
             <p>{error}</p>
           </div>
         )}
 
-        {!error && (
+        {!error && !loading && (
           <>
             <input
               type="text"
@@ -64,14 +82,14 @@ export default function Home({ products, error }) {
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`${styles.filterBtn} ${activeCategory === category ? styles.filterBtnActive : ""
-                    }`}
+                  className={`${styles.filterBtn} ${
+                    activeCategory === category ? styles.filterBtnActive : ""
+                  }`}
                 >
                   {category === "all" ? "Все товары" : category}
                 </button>
               ))}
             </div>
-
 
             {filteredProducts.length === 0 ? (
               <p className={styles.noResults}>Ничего не найдено</p>
@@ -87,25 +105,4 @@ export default function Home({ products, error }) {
       </div>
     </div>
   );
-}
-
-export async function getStaticProps() {
-  try {
-    const res = await fetch("https://fakestoreapi.com/products", {
-      headers: { "User-Agent": "Mozilla/5.0" },
-    });
-
-    if (!res.ok) throw new Error(`Ошибка API: ${res.status}`);
-
-    const products = await res.json();
-
-    return {
-      props: { products, error: null },
-      // без revalidate — страница остаётся полностью статичной
-    };
-  } catch (err) {
-    return {
-      props: { products: [], error: err.message || "Не удалось загрузить товары" },
-    };
-  }
 }
