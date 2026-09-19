@@ -92,38 +92,20 @@ export default function Home({ products, error }) {
 export async function getStaticProps() {
   try {
     const res = await fetch("https://fakestoreapi.com/products", {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/json",
-      },
+      headers: { "User-Agent": "Mozilla/5.0" },
     });
 
-    console.log("Fake API status:", res.status);
-
-    if (!res.ok) {
-      throw new Error(`Ошибка API: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`Ошибка API: ${res.status}`);
 
     const products = await res.json();
 
-    console.log("Products loaded:", products.length);
-
     return {
-      props: {
-        products,
-        error: null,
-      },
-      revalidate: 3600,
+      props: { products, error: null },
+      // без revalidate — страница остаётся полностью статичной
     };
   } catch (err) {
-    console.error("Fake Store API error:", err);
-
     return {
-      props: {
-        products: [],
-        error: err.message || "Не удалось загрузить товары",
-      },
-      revalidate: 60,
+      props: { products: [], error: err.message || "Не удалось загрузить товары" },
     };
   }
 }
