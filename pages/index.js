@@ -5,6 +5,7 @@ import styles from "@/styles/Home.module.css";
 
 export default function Home({ products, error }) {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("")
 
   const categories = useMemo(() => {
     if (!products) return [];
@@ -13,9 +14,15 @@ export default function Home({ products, error }) {
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    if (activeCategory === "all") return products;
-    return products.filter((p) => p.category === activeCategory);
-  }, [products, activeCategory]);
+    return products
+      .filter((p) =>
+        activeCategory === "all" ? true : p.category === activeCategory
+      )
+      .filter((p) =>
+        p.title.toLowerCase().includes(searchTerm.trim().toLowerCase())
+      )
+
+  }, [products, activeCategory, searchTerm]);
 
   return (
     <div className="page">
@@ -43,26 +50,38 @@ export default function Home({ products, error }) {
 
         {!error && (
           <>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Поиск товаров"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
             <div className={styles.filters}>
               {categories.map((category) => (
                 <button
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`${styles.filterBtn} ${
-                    activeCategory === category ? styles.filterBtnActive : ""
-                  }`}
+                  className={`${styles.filterBtn} ${activeCategory === category ? styles.filterBtnActive : ""
+                    }`}
                 >
                   {category === "all" ? "Все товары" : category}
                 </button>
               ))}
             </div>
 
-            <div className={styles.grid}>
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+
+            {filteredProducts.length === 0 ? (
+              <p className={styles.noResults}>Ничего не найдено</p>
+            ) : (
+              <div className={styles.grid}>
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
