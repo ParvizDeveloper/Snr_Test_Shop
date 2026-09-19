@@ -91,7 +91,12 @@ export default function Home({ products, error }) {
 
 export async function getStaticProps() {
   try {
-    const res = await fetch("https://fakestoreapi.com/products");
+    const res = await fetch("https://fakestoreapi.com/products", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
+      },
+    });
 
     console.log("Fake API status:", res.status);
 
